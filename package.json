@@ -1,0 +1,27 @@
+{
+  "name": "college-complaint-management-system",
+  "version": "1.0.0",
+  "description": "College Complaint Management System - Full Stack Application",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "install:student": "cd student-frontend && npm install",
+    "install:admin": "cd admin-frontend && npm install",
+    "install:all": "npm run install:server && npm run install:student && npm run install:admin",
+    "dev:server": "cd server && npm run dev",
+    "start:server": "cd server && npm start",
+    "dev:student": "cd student-frontend && npm run dev",
+    "dev:admin": "cd admin-frontend && npm run dev",
+    "build:student": "cd student-frontend && npm run build",
+    "build:admin": "cd admin-frontend && npm run build",
+    "build:all": "npm run build:student && npm run build:admin"
+  },
+  "keywords": [
+    "complaint-management-system",
+    "mern",
+    "react",
+    "node",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC"
+}
