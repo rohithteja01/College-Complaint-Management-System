@@ -16,8 +16,9 @@ const obtainAdminToken = async () => {
     return authPromise;
   }
   isAuthenticating = true;
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
   authPromise = axios
-    .post('http://localhost:5000/api/auth/login', {
+    .post(`${baseUrl}/auth/login`, {
       email: 'admin@college.edu',
       password: 'AdminPassword@123',
     })

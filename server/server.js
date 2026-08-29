@@ -28,24 +28,72 @@ app.use(
   })
 );
 
-// CORS configuration for Separate Student (5173) and Admin (5174) hosts
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || 'http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174')
-  .split(',')
-  .map((url) => url.trim());
+// Helper to parse comma-separated environment variables
+const parseOrigins = (envVar) => {
+  if (!envVar) return [];
+  return envVar
+    .split(',')
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+};
+
+// Default allowed origins (production Vercel domains and local dev hosts)
+const defaultOrigins = [
+  'https://college-complaint-management-system-bay.vercel.app',
+  'https://college-complaint-management-system-ane1yom57-rohith-da8b.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+  'http://localhost:3000',
+  'http://localhost:5000',
+];
+
+// Merge origins from ALLOWED_ORIGINS and CLIENT_URL environment variables
+const customOrigins = [
+  ...parseOrigins(process.env.ALLOWED_ORIGINS),
+  ...parseOrigins(process.env.CLIENT_URL),
+];
+
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...customOrigins]));
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // Allow non-browser requests (mobile apps, curl, Postman, test suites)
+  const cleanOrigin = origin.trim().replace(/\/$/, '');
+
+  // 1. Check exact match in configured allowed origins
+  if (allowedOrigins.includes(cleanOrigin)) {
+    return true;
+  }
+
+  // 2. Dynamic match for any Vercel deployment preview under this project or vercel.app
+  if (/^https:\/\/college-complaint-management-system.*\.vercel\.app$/.test(cleanOrigin)) {
+    return true;
+  }
+  if (/^https:\/\/.*\.vercel\.app$/.test(cleanOrigin)) {
+    return true;
+  }
+
+  return false;
+};
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. mobile apps, curl, Postman, test suites)
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
+    if (isOriginAllowed(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, false);
     }
-    return callback(new Error(`CORS blocked request from unauthorized origin: ${origin}`));
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
+  optionsSuccessStatus: 204,
 };
+
+// Register CORS middleware before any routes or body parsers
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Body parsing middleware with bounded limits to prevent payload flood attacks
 app.use(express.json({ limit: '1mb' }));
