@@ -13,13 +13,23 @@ let mongodInstance = null;
  * Connect to MongoDB instance using MONGODB_URI or auto-fallback to in-memory server
  */
 const connectDB = async () => {
-  const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
+  let mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (typeof mongoURI === 'string') {
+    mongoURI = mongoURI.trim();
+  }
 
   // 1. If explicit MONGODB_URI is provided, attempt connection
   if (mongoURI) {
+    // Check for common formatting mistakes (like leaving in <password> angle brackets)
+    if (mongoURI.includes('<') || mongoURI.includes('>')) {
+      console.warn(
+        '[MongoDB] Warning: MONGODB_URI contains angle brackets ("<" or ">"). Please ensure placeholder brackets around your password are removed and special characters are URL-encoded.'
+      );
+    }
+
     try {
       const conn = await mongoose.connect(mongoURI, {
-        serverSelectionTimeoutMS: 3000,
+        serverSelectionTimeoutMS: 10000, // 10s timeout for cloud clusters like MongoDB Atlas
       });
       console.log(`[MongoDB] Connected successfully to host: ${conn.connection.host}, database: ${conn.connection.name}`);
       
